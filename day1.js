@@ -1,46 +1,13 @@
-const fs = require('fs')
+'use strict'
 
-const solveCaptcha = (input) => {
-    let result = 0
-    const series = input.split('')
+{
+  const fs = require('fs')
 
-    for(idx=0; idx < series.length; idx++){
-	const nextIdx = (idx === series.length - 1) ? 0 : idx + 1
-	
-        if(series[idx]===series[nextIdx]){
-          result += parseInt(series[idx])
-	}
-    }
-    
-    console.log(`The answer is ${result}`)
+  fs.readFile('captcha.txt','utf8',(err, data) => { 
+    const digits = [...data.trim()].map(Number);
+    const sumMatching = shift => digits
+        .filter((number, idx, set) => number === set[shift(idx, set.length) % set.length])
+        .reduce((sum, number) => sum + number, 0);
+    console.log([idx => idx + 1, (idx, length) => idx + length / 2].map(sumMatching));
+  })
 }
-
-const solveCaptcha2 = (input) => {
-    let result = 0
-    const series = input.split('')
-
-    for(idx=0; idx < series.length; idx++){
-	const nextIdx = (idx + (series.length / 2)) % series.length
-	
-        if(series[idx]===series[nextIdx]){
-          result += parseInt(series[idx])
-	}
-    }
-    
-    console.log(`The answer is ${result}`)
-}
-
-solveCaptcha('1122')
-solveCaptcha('1111')
-solveCaptcha('1234')
-solveCaptcha('91212129')
-solveCaptcha2('1212')
-solveCaptcha2('1221')
-solveCaptcha2('123425')
-solveCaptcha2('123123')
-solveCaptcha2('12131415')
-
-fs.readFile('captcha.txt','utf8',(err, data) => { 
-  solveCaptcha(data.trim())
-  solveCaptcha2(data.trim())
-})
