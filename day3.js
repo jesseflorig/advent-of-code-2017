@@ -1,107 +1,60 @@
-const target = 368078
+'use strict'
 
-const generateSpiral = (target) => {
-  let spiral = [[1]]
-  let cursor = 1
+{
+    // Length of a side of the current ring
+    const currentRing = idx => (x => x + (1 - x % 2))(Math.ceil(Math.sqrt(idx)))
+    const steps = n => {
+        const r = currentRing(n)
+        const numR = (r - 1) / 2
+        const cycle = n - ((r - 2) ** 2)
+        const innerOffset = cycle % (r - 1)
 
-  for(let idx = 1; idx > 0; idx++){
-    if(cursor >= target){ idx = -1 }
+        return numR + Math.abs(innerOffset - numR)
+    };
 
-    switch(idx) {
-      case 1:
-        //console.log('move up')
-        spiral.reverse()
+    const aSeq = [0, 1, 1, 2, 4, 5, 10, 11, 23, 25]
+    const a = idx => {
+        if (idx in aSeq) return aSeq[idx]
+        aSeq[idx] = a(idx - 1)
 
-        spiral.map(row => {
-          cursor += 1
-          row.push(cursor)
-        })
+        const n = currentRing(idx) - 2 // the largest odd n so that n^2 < i,  or a side of a prev. ring
+        const n2 = n ** 2            // end of a previous ring
+        const m2 = (n - 2) ** 2      // end of a ring before a prev. one
+        const o2 = (n + 2) ** 2      // end of the current ring
+        // Sides start after diagonals and end on them
+        const placeOnSide = j => (j - n2) % (n + 1)
+        // Number of the current side (1..4)
+        const side = j => Math.ceil((j - n2) / (n + 1))
+        // Go to the diagonal on this side and slide on it 1 step down to the center
+        const downDiag = sideNum => m2 + sideNum * (n - 1)
 
-        spiral.reverse()
-        //console.log(spiral)
-        break
-      case 2:
-        //console.log('move left')
-        const leftWidth = spiralWidth(spiral)
-        const leftMax = cursor + leftWidth
-        let leftRow = []
-
-        for(let lIdx = cursor; lIdx < leftMax; lIdx++){
-          cursor += 1
-          leftRow.push(cursor)
+        if (idx === n2 + 1) { // start of a ring
+            aSeq[idx] += a(m2 + 1)
+        } else if (idx === o2 - 1) { // just before the end of a ring
+            aSeq[idx] += a(n2 - 1) + a(n2) + a(n2 + 1)
+        } else if (idx === o2) {           // end of a ring
+            aSeq[idx] += a(n2) + a(n2 + 1)
+        } else if (placeOnSide(idx) === 0) { // on any of the 3 other diagonals
+            aSeq[idx] += a(downDiag(side(idx)))
+        } else if (placeOnSide(idx) === n) { // before them
+            const d = downDiag(side(idx))
+            aSeq[idx] += a(d) + a(d - 1)
+        } else if (placeOnSide(idx) === 1) { // after them
+            const d = downDiag(side(idx - 1))
+            aSeq[idx] += a(d) + a(d + 1) + a(idx - 2)
+        } else { // just on a side, away from corners
+            // Move one step vert./hor. closer to the center
+            const j = downDiag(side(idx) - 1) + placeOnSide(idx) - 1
+            aSeq[idx] += a(j - 1 === m2 ? n2 : j - 1) + a(j) + a(j + 1)
         }
 
-        leftRow.reverse()
-        spiral.unshift(leftRow)
-        //console.log(spiral)
-        break
-      case 3:
-        //console.log('move down')
+        return aSeq[idx]
+    };
 
-        spiral.map(row => {
-          cursor += 1
-          row.unshift(cursor)
-        })
-        //console.log(spiral)
-        break
-      case 4:
-        //console.log('move right')
-        const rightWidth = spiralWidth(spiral)
-        const rightMax = cursor + rightWidth
-        let rightRow = []
+    const  target = 368078
+    console.log(`${steps(target)} steps`);
 
-        for(let rIdx = cursor; rIdx < rightMax; rIdx++){
-          cursor += 1
-          rightRow.push(cursor)
-        }
-
-        spiral.push(rightRow)
-        //console.log(spiral)
-        idx = 0
-        break
-    }
-  }
-  return spiral 
+    let [val, idx] = [0, 0];
+    while (val < target) val = a(++idx);
+    console.log(`a[${idx}] = ${val}`);
 }
-
-const spiralHeight = (spiral) => {
-  return spiral.length
-}
-
-const spiralWidth = (spiral) => {
-  let widest = 0
-
-  spiral.map( row => {
-    if(row.length > widest){
-      widest = row.length
-    }
-  })
-  return widest
-}
-
-const findTarget = (item) => {
-  return item === target
-}
-
-const printSpiral = (spiral) => {
-  console.log('Result Grid')
-  spiral.map(row => {
-    console.log(row.toString())
-  })
-}
-
-const solveSpiral = (spiral, target) => {
-  const lastRow = spiral[spiral.length - 1]
-  const height = Math.ceil(spiralHeight(spiral) / 2) - 1
-  const width = Math.floor(spiralWidth(spiral) / 2) - 1
-  const latOffset = Math.abs(spiralWidth(spiral) - lastRow.findIndex((findTarget))) - 1
-  const walkLat = Math.abs(latOffset - width)
-  const walkLon = height
-
-  console.log('target:', target, 'lat:', walkLat, 'lon:', walkLon, 'total:', walkLat + walkLon)
-}
-
-const spiral = generateSpiral(target)
-//printSpiral(spiral)
-solveSpiral(spiral, target)
-
